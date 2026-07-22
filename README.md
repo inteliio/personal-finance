@@ -52,6 +52,10 @@ Open [http://localhost:3000](http://localhost:3000), sign in with Google, and lo
 
 Pages: `/` (new expense), `/transactions` (transaction history).
 
+## Docs
+
+- [Features](docs/FEATURES.md) — full inventory of current app capabilities
+
 ## Scripts
 
 ```bash
@@ -59,4 +63,5 @@ npm run dev      # development
 npm run build    # production build
 npm run start    # run production build
 npm run lint     # ESLint
+npm test         # unit tests
 ```

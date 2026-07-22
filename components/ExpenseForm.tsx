@@ -3,7 +3,22 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { AppHeader } from "@/components/AppHeader";
-import { CATEGORIES, EXPENSE_TYPES, getSubcategories, type Category, type ExpenseType } from "@/lib/constants";
+import {
+  CATEGORIES,
+  EXPENSE_TYPES,
+  getSubcategories,
+  isValidSubcategory,
+  type Category,
+  type ExpenseType,
+} from "@/lib/constants";
+
+const LAST_EXPENSE_KEY = "pf-last-expense";
+
+type LastExpenseDefaults = {
+  expenseType: ExpenseType;
+  category: Category;
+  subcategory: string;
+};
 
 type MeResponse = {
   spreadsheetId?: string;
@@ -16,6 +31,45 @@ type Props = {
   userName?: string | null;
   initialSpreadsheetId?: string;
 };
+
+function isExpenseType(value: unknown): value is ExpenseType {
+  return typeof value === "string" && (EXPENSE_TYPES as readonly string[]).includes(value);
+}
+
+function isCategory(value: unknown): value is Category {
+  return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
+}
+
+function readLastExpenseDefaults(): LastExpenseDefaults | null {
+  try {
+    const raw = window.localStorage.getItem(LAST_EXPENSE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<LastExpenseDefaults>;
+    if (!isExpenseType(parsed.expenseType) || !isCategory(parsed.category)) {
+      return null;
+    }
+    const subcategory =
+      typeof parsed.subcategory === "string" &&
+      isValidSubcategory(parsed.category, parsed.subcategory)
+        ? parsed.subcategory
+        : "";
+    return {
+      expenseType: parsed.expenseType,
+      category: parsed.category,
+      subcategory,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeLastExpenseDefaults(defaults: LastExpenseDefaults) {
+  try {
+    window.localStorage.setItem(LAST_EXPENSE_KEY, JSON.stringify(defaults));
+  } catch {
+    // Ignore quota / private-mode failures
+  }
+}
 
 export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
   const { update } = useSession();
@@ -44,6 +98,14 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
     },
     [update],
   );
+
+  useEffect(() => {
+    const defaults = readLastExpenseDefaults();
+    if (!defaults) return;
+    setExpenseType(defaults.expenseType);
+    setCategory(defaults.category);
+    setSubcategory(defaults.subcategory);
+  }, []);
 
   useEffect(() => {
     if (initialSpreadsheetId) return;
@@ -93,15 +155,15 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
         await persistSheetId(data.spreadsheetId, data.sheetUrl);
       }
 
+      writeLastExpenseDefaults({ expenseType, category, subcategory });
+
+      // Clear entry fields only — keep type/category/subcategory for faster re-entry
       setProductName("");
       setAmountMkd("");
       setNote("");
       setShowNote(false);
-      setExpenseType("need");
-      setCategory("Other");
-      setSubcategory("");
       setStatus("ok");
-      window.setTimeout(() => setStatus("idle"), 1600);
+      window.setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Save failed");
@@ -216,7 +278,7 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
         <div className="mt-auto flex flex-col gap-3 pt-2">
           {status === "ok" ? (
             <p className="text-center text-sm font-medium text-[var(--ok)]" role="status">
-              Saved — ready for the next one
+              Saved. Type and category kept for the next entry.
             </p>
           ) : null}
           {status === "error" && error ? (

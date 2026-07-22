@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { AppHeader } from "@/components/AppHeader";
 import { CATEGORIES, EXPENSE_TYPES, getSubcategories, type Category, type ExpenseType } from "@/lib/constants";
 
 type MeResponse = {
@@ -109,26 +110,7 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6 sm:px-6 sm:py-8">
-      <header className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
-            Personal Finance
-          </p>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl tracking-tight">
-            New expense
-          </h1>
-          {userName ? (
-            <p className="mt-1 text-sm text-[var(--muted)]">{userName}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={() => signOut()}
-          className="shrink-0 text-sm text-[var(--muted)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-        >
-          Sign out
-        </button>
-      </header>
+      <AppHeader title="New expense" userName={userName} />
 
       <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-5">
         <label className="block">

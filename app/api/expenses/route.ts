@@ -10,6 +10,7 @@ import {
   type ExpenseType,
 } from "@/lib/constants";
 import { getGoogleAuth, getSheetsClient } from "@/lib/google";
+import { parseExpenseRow } from "@/lib/expenses";
 import { ensureFinanceSpreadsheet, sheetUrl } from "@/lib/sheets";
 
 type ExpenseBody = {
@@ -34,6 +35,38 @@ function nowInSkopje(): string {
   })
     .format(new Date())
     .replace(" ", "T");
+}
+
+export async function GET() {
+  try {
+    const { oauth2, session } = await getGoogleAuth();
+    const spreadsheetId = await ensureFinanceSpreadsheet(
+      oauth2,
+      session.spreadsheetId,
+    );
+    const sheets = getSheetsClient(oauth2);
+
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${EXPENSES_TAB}!A2:H`,
+    });
+
+    const expenses = (res.data.values ?? [])
+      .map(parseExpenseRow)
+      .filter((expense) => expense !== null)
+      .reverse();
+
+    return NextResponse.json({
+      expenses,
+      spreadsheetId,
+      sheetUrl: sheetUrl(spreadsheetId),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load expenses";
+    const status = message === "Unauthorized" ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
 }
 
 export async function POST(request: Request) {

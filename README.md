@@ -46,10 +46,11 @@ Open [http://localhost:3000](http://localhost:3000), sign in with Google, and lo
 
 ## API (MVP)
 
+- `GET /api/expenses` — `{ expenses, spreadsheetId, sheetUrl }`
 - `POST /api/expenses` — `{ productName, amountMkd, expenseType, category?, subcategory?, note? }` → `{ id, createdAt, spreadsheetId, sheetUrl }`
 - `GET /api/me` — session + sheet readiness
 
-Write-only: no list/edit/delete in the UI.
+Pages: `/` (new expense), `/transactions` (transaction history).
 
 ## Scripts
 

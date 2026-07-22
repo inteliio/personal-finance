@@ -152,22 +152,19 @@ export async function ensureFinanceSpreadsheet(
   authClient: GoogleOAuthClient,
   knownId?: string | null,
 ): Promise<string> {
-  let spreadsheetId: string;
-
   if (knownId) {
     try {
       const drive = getDriveClient(authClient);
       await drive.files.get({ fileId: knownId, fields: "id" });
-      spreadsheetId = knownId;
+      // Skip header migration — avoids a Sheets read on every request.
+      return knownId;
     } catch {
-      const existing = await findExistingSpreadsheet(authClient);
-      spreadsheetId = existing ?? (await createSpreadsheet(authClient));
+      // Sheet was deleted or inaccessible — fall through to find/create.
     }
-  } else {
-    const existing = await findExistingSpreadsheet(authClient);
-    spreadsheetId = existing ?? (await createSpreadsheet(authClient));
   }
 
+  const existing = await findExistingSpreadsheet(authClient);
+  const spreadsheetId = existing ?? (await createSpreadsheet(authClient));
   await ensureExpenseHeaders(authClient, spreadsheetId);
   return spreadsheetId;
 }

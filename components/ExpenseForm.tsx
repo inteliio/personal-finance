@@ -46,6 +46,8 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
   );
 
   useEffect(() => {
+    if (initialSpreadsheetId) return;
+
     let cancelled = false;
     (async () => {
       try {
@@ -61,7 +63,7 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [persistSheetId]);
+  }, [initialSpreadsheetId, persistSheetId]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

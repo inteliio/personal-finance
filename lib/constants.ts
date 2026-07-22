@@ -10,6 +10,7 @@ export const EXPENSE_HEADERS = [
   "expense_type",
   "created_at",
   "category",
+  "subcategory",
   "note",
 ] as const;
 
@@ -27,5 +28,28 @@ export const CATEGORIES = [
   "Other",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
+
+export const SUBCATEGORIES: Record<Category, readonly string[]> = {
+  Food: ["Groceries", "Dining", "Coffee", "Delivery", "Snacks"],
+  Transport: ["Fuel", "Public transit", "Taxi", "Parking", "Maintenance"],
+  Housing: ["Rent", "Mortgage", "Furniture", "Repairs"],
+  Bills: ["Phone", "Internet", "Electricity", "Water", "Subscriptions"],
+  Health: ["Pharmacy", "Doctor", "Dental", "Fitness"],
+  Entertainment: ["Streaming", "Events", "Hobbies", "Games"],
+  Shopping: ["Clothing", "Electronics", "Home goods", "Gifts"],
+  Other: ["Misc"],
+};
+
+export function getSubcategories(category: Category): readonly string[] {
+  return SUBCATEGORIES[category];
+}
+
+export function isValidSubcategory(
+  category: Category,
+  subcategory: string | undefined,
+): boolean {
+  if (!subcategory) return true;
+  return SUBCATEGORIES[category].includes(subcategory);
+}
 
 export const TIMEZONE = "Europe/Skopje";

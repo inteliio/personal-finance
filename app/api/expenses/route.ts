@@ -5,6 +5,7 @@ import {
   EXPENSE_TYPES,
   EXPENSES_TAB,
   TIMEZONE,
+  isValidSubcategory,
   type Category,
   type ExpenseType,
 } from "@/lib/constants";
@@ -16,6 +17,7 @@ type ExpenseBody = {
   amountMkd?: number | string;
   expenseType?: string;
   category?: string;
+  subcategory?: string;
   note?: string;
 };
 
@@ -49,6 +51,7 @@ export async function POST(request: Request) {
       : body.amountMkd;
   const expenseType = body.expenseType as ExpenseType | undefined;
   const category = (body.category?.trim() || "Other") as Category;
+  const subcategory = body.subcategory?.trim() || "";
   const note = body.note?.trim() || "";
 
   if (!productName) {
@@ -75,6 +78,12 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  if (!isValidSubcategory(category, subcategory || undefined)) {
+    return NextResponse.json(
+      { error: `subcategory is not valid for category ${category}` },
+      { status: 400 },
+    );
+  }
 
   try {
     const { oauth2, session } = await getGoogleAuth();
@@ -89,7 +98,7 @@ export async function POST(request: Request) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${EXPENSES_TAB}!A:G`,
+      range: `${EXPENSES_TAB}!A:H`,
       valueInputOption: "USER_ENTERED",
       insertDataOption: "INSERT_ROWS",
       requestBody: {
@@ -101,6 +110,7 @@ export async function POST(request: Request) {
             expenseType,
             createdAt,
             category,
+            subcategory,
             note,
           ],
         ],

@@ -96,24 +96,80 @@ async function createSpreadsheet(authClient: GoogleOAuthClient): Promise<string>
   return spreadsheetId;
 }
 
+async function ensureExpenseHeaders(
+  authClient: GoogleOAuthClient,
+  spreadsheetId: string,
+): Promise<void> {
+  const sheets = getSheetsClient(authClient);
+  const headerRes = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${EXPENSES_TAB}!1:1`,
+  });
+  const headers = headerRes.data.values?.[0] ?? [];
+
+  if (headers.includes("subcategory")) return;
+
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: "sheets.properties",
+  });
+  const sheetId = meta.data.sheets?.find(
+    (s) => s.properties?.title === EXPENSES_TAB,
+  )?.properties?.sheetId;
+  if (sheetId === undefined) return;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          insertDimension: {
+            range: {
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: 6,
+              endIndex: 7,
+            },
+            inheritFromBefore: false,
+          },
+        },
+      ],
+    },
+  });
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${EXPENSES_TAB}!A1`,
+    valueInputOption: "RAW",
+    requestBody: {
+      values: [Array.from(EXPENSE_HEADERS)],
+    },
+  });
+}
+
 /** Find or create the Personal Finance DB spreadsheet; returns spreadsheetId. */
 export async function ensureFinanceSpreadsheet(
   authClient: GoogleOAuthClient,
   knownId?: string | null,
 ): Promise<string> {
+  let spreadsheetId: string;
+
   if (knownId) {
     try {
       const drive = getDriveClient(authClient);
       await drive.files.get({ fileId: knownId, fields: "id" });
-      return knownId;
+      spreadsheetId = knownId;
     } catch {
-      // Fall through to find/create if stored id is stale
+      const existing = await findExistingSpreadsheet(authClient);
+      spreadsheetId = existing ?? (await createSpreadsheet(authClient));
     }
+  } else {
+    const existing = await findExistingSpreadsheet(authClient);
+    spreadsheetId = existing ?? (await createSpreadsheet(authClient));
   }
 
-  const existing = await findExistingSpreadsheet(authClient);
-  if (existing) return existing;
-  return createSpreadsheet(authClient);
+  await ensureExpenseHeaders(authClient, spreadsheetId);
+  return spreadsheetId;
 }
 
 export function sheetUrl(spreadsheetId: string): string {

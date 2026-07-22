@@ -41,12 +41,12 @@ Open [http://localhost:3000](http://localhost:3000), sign in with Google, and lo
 
 - First sign-in requests Sheets + Drive file access.
 - On first use (`GET /api/me` or `POST /api/expenses`), the app finds or creates **Personal Finance DB** with an `expenses` tab and header row.
-- Each save appends one row: `id`, `product_name`, `amount_mkd`, `expense_type`, `created_at`, `category`, `note`.
+- Each save appends one row: `id`, `product_name`, `amount_mkd`, `expense_type`, `created_at`, `category`, `subcategory`, `note`.
 - Use **Open spreadsheet in Drive** to view the sheet.
 
 ## API (MVP)
 
-- `POST /api/expenses` — `{ productName, amountMkd, expenseType, category?, note? }` → `{ id, createdAt, spreadsheetId, sheetUrl }`
+- `POST /api/expenses` — `{ productName, amountMkd, expenseType, category?, subcategory?, note? }` → `{ id, createdAt, spreadsheetId, sheetUrl }`
 - `GET /api/me` — session + sheet readiness
 
 Write-only: no list/edit/delete in the UI.

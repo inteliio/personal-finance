@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { CATEGORIES, EXPENSE_TYPES, type Category, type ExpenseType } from "@/lib/constants";
+import { CATEGORIES, EXPENSE_TYPES, getSubcategories, type Category, type ExpenseType } from "@/lib/constants";
 
 type MeResponse = {
   spreadsheetId?: string;
@@ -22,6 +22,7 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
   const [amountMkd, setAmountMkd] = useState("");
   const [expenseType, setExpenseType] = useState<ExpenseType>("need");
   const [category, setCategory] = useState<Category>("Other");
+  const [subcategory, setSubcategory] = useState("");
   const [note, setNote] = useState("");
   const [showNote, setShowNote] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -76,6 +77,7 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
           amountMkd: Number(amountMkd),
           expenseType,
           category,
+          subcategory: subcategory || undefined,
           note: note || undefined,
         }),
       });
@@ -94,6 +96,7 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
       setShowNote(false);
       setExpenseType("need");
       setCategory("Other");
+      setSubcategory("");
       setStatus("ok");
       window.setTimeout(() => setStatus("idle"), 1600);
     } catch (err) {
@@ -177,12 +180,31 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
               <Chip
                 key={cat}
                 selected={category === cat}
-                onClick={() => setCategory(cat)}
+                onClick={() => {
+                  setCategory(cat);
+                  setSubcategory("");
+                }}
                 label={cat}
               />
             ))}
           </div>
         </fieldset>
+
+        {getSubcategories(category).length > 0 ? (
+          <fieldset>
+            <legend className="mb-1.5 text-sm font-medium">Subcategory (optional)</legend>
+            <div className="flex flex-wrap gap-2">
+              {getSubcategories(category).map((sub) => (
+                <Chip
+                  key={sub}
+                  selected={subcategory === sub}
+                  onClick={() => setSubcategory(subcategory === sub ? "" : sub)}
+                  label={sub}
+                />
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
 
         <div>
           {!showNote ? (

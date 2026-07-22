@@ -3,16 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { APP_NAV } from "@/lib/nav";
 
 type Props = {
   title: string;
   userName?: string | null;
 };
-
-const NAV = [
-  { href: "/", label: "New expense" },
-  { href: "/transactions", label: "Transactions" },
-] as const;
 
 export function AppHeader({ title, userName }: Props) {
   const pathname = usePathname();
@@ -40,8 +36,8 @@ export function AppHeader({ title, userName }: Props) {
         </button>
       </div>
 
-      <nav className="flex gap-1 rounded-lg bg-[var(--chip)] p-1">
-        {NAV.map(({ href, label }) => {
+      <nav className="hidden gap-1 rounded-lg bg-[var(--chip)] p-1 md:flex" aria-label="Primary">
+        {APP_NAV.map(({ href, label }) => {
           const active = pathname === href;
           return (
             <Link
@@ -49,7 +45,7 @@ export function AppHeader({ title, userName }: Props) {
               href={href}
               className={`flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition ${
                 active
-                  ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
+                  ? "bg-[var(--surface)] text-[var(--foreground)]"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
               }`}
             >

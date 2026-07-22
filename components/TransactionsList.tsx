@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
+import { BottomNav } from "@/components/BottomNav";
 import {
   CATEGORIES,
   EXPENSE_TYPES,
@@ -45,6 +46,18 @@ function formatDate(createdAt: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  }).format(date);
+}
+
+function formatDateShort(createdAt: string): string {
+  if (!createdAt) return "—";
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return createdAt;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIMEZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   }).format(date);
 }
 
@@ -113,159 +126,220 @@ export function TransactionsList({ userName }: Props) {
     category !== "all" || expenseType !== "all" || search.trim() !== "" || month !== "all";
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6 sm:px-6 sm:py-8">
-      <AppHeader title="Transactions" userName={userName} />
+    <>
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6 pb-[calc(var(--nav-height)+env(safe-area-inset-bottom)+1.5rem)] sm:px-6 sm:py-8 md:max-w-5xl md:pb-8">
+        <AppHeader title="Transactions" userName={userName} />
 
-      {loading ? (
-        <p className="text-sm text-[var(--muted)]">Loading transactions…</p>
-      ) : error ? (
-        <p className="text-sm font-medium text-[var(--danger)]" role="alert">
-          {error}
-        </p>
-      ) : expenses.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-12 text-center">
-          <p className="text-sm text-[var(--muted)]">No transactions yet.</p>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Log your first expense to see it here.
+        {loading ? (
+          <p className="text-sm text-[var(--muted)]">Loading transactions…</p>
+        ) : error ? (
+          <p className="text-sm font-medium text-[var(--danger)]" role="alert">
+            {error}
           </p>
-        </div>
-      ) : (
-        <>
-          <div className="mb-4 grid grid-cols-2 gap-2">
-            <SummaryCard label="This month" amount={thisMonthTotal} />
-            <SummaryCard label="All time" amount={allTimeTotal} />
+        ) : expenses.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-12 text-center">
+            <p className="text-sm text-[var(--muted)]">No transactions yet.</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Log your first expense to see it here.
+            </p>
           </div>
-
-          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-            <label className="block">
-              <span className="sr-only">Search by product name</span>
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search product…"
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
-              />
-            </label>
-
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <FilterSelect
-                label="Month"
-                value={month}
-                onChange={setMonth}
-                options={[
-                  { value: "all", label: "All months" },
-                  ...months.map((ym) => ({
-                    value: ym,
-                    label:
-                      ym === thisMonthKey
-                        ? `${formatYearMonthLabel(ym)} (current)`
-                        : formatYearMonthLabel(ym),
-                  })),
-                ]}
-              />
-              <FilterSelect
-                label="Category"
-                value={category}
-                onChange={(value) => setCategory(value as Category | "all")}
-                options={[
-                  { value: "all", label: "All categories" },
-                  ...CATEGORIES.map((cat) => ({ value: cat, label: cat })),
-                ]}
-              />
-              <FilterSelect
-                label="Type"
-                value={expenseType}
-                onChange={(value) => setExpenseType(value as ExpenseType | "all")}
-                options={[
-                  { value: "all", label: "All types" },
-                  ...EXPENSE_TYPES.map((type) => ({
-                    value: type,
-                    label: type,
-                  })),
-                ]}
-              />
+        ) : (
+          <>
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              <SummaryCard label="This month" amount={thisMonthTotal} />
+              <SummaryCard label="All time" amount={allTimeTotal} />
             </div>
 
-            {hasActiveFilters ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setCategory("all");
-                  setExpenseType("all");
-                  setSearch("");
-                  setMonth("all");
-                }}
-                className="self-start text-sm text-[var(--muted)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-              >
-                Clear filters
-              </button>
-            ) : null}
-          </div>
+            <div className="mb-4 flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+              <label className="block">
+                <span className="sr-only">Search by product name</span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search product…"
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/25"
+                />
+              </label>
 
-          <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-            <p className="text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
-              {hasActiveFilters ? "Filtered total" : "Showing"}
-            </p>
-            <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight">
-              {amountFormatter.format(filteredTotal)}
-            </p>
-            <p className="mt-0.5 text-sm text-[var(--muted)]">
-              {filtered.length} transaction{filtered.length === 1 ? "" : "s"}
-              {hasActiveFilters ? ` of ${expenses.length}` : ""}
-            </p>
-          </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <FilterSelect
+                  label="Month"
+                  value={month}
+                  onChange={setMonth}
+                  options={[
+                    { value: "all", label: "All months" },
+                    ...months.map((ym) => ({
+                      value: ym,
+                      label:
+                        ym === thisMonthKey
+                          ? `${formatYearMonthLabel(ym)} (current)`
+                          : formatYearMonthLabel(ym),
+                    })),
+                  ]}
+                />
+                <FilterSelect
+                  label="Category"
+                  value={category}
+                  onChange={(value) => setCategory(value as Category | "all")}
+                  options={[
+                    { value: "all", label: "All categories" },
+                    ...CATEGORIES.map((cat) => ({ value: cat, label: cat })),
+                  ]}
+                />
+                <FilterSelect
+                  label="Type"
+                  value={expenseType}
+                  onChange={(value) => setExpenseType(value as ExpenseType | "all")}
+                  options={[
+                    { value: "all", label: "All types" },
+                    ...EXPENSE_TYPES.map((type) => ({
+                      value: type,
+                      label: type,
+                    })),
+                  ]}
+                />
+              </div>
 
-          {filtered.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-10 text-center">
-              <p className="text-sm text-[var(--muted)]">No transactions match these filters.</p>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {filtered.map((expense) => (
-                <li
-                  key={expense.id}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3"
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategory("all");
+                    setExpenseType("all");
+                    setSearch("");
+                    setMonth("all");
+                  }}
+                  className="self-start text-sm text-[var(--muted)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{expense.productName}</p>
-                      <p className="mt-0.5 text-sm text-[var(--muted)]">
-                        {formatDate(expense.createdAt)}
-                      </p>
-                    </div>
-                    <p className="shrink-0 text-lg font-semibold tabular-nums">
-                      {amountFormatter.format(expense.amountMkd)}
-                    </p>
-                  </div>
+                  Clear filters
+                </button>
+              ) : null}
+            </div>
 
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Tag label={expense.expenseType} />
-                    <Tag label={expense.category} />
-                    {expense.subcategory ? <Tag label={expense.subcategory} /> : null}
-                  </div>
+            <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+              <p className="text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                {hasActiveFilters ? "Filtered total" : "Showing"}
+              </p>
+              <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight">
+                {amountFormatter.format(filteredTotal)}
+              </p>
+              <p className="mt-0.5 text-sm text-[var(--muted)]">
+                {filtered.length} transaction{filtered.length === 1 ? "" : "s"}
+                {hasActiveFilters ? ` of ${expenses.length}` : ""}
+              </p>
+            </div>
 
-                  {expense.note ? (
-                    <p className="mt-2 text-sm text-[var(--muted)]">{expense.note}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
+            {filtered.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] px-6 py-10 text-center">
+                <p className="text-sm text-[var(--muted)]">No transactions match these filters.</p>
+              </div>
+            ) : (
+              <>
+                <ul className="flex flex-col gap-2 md:hidden">
+                  {filtered.map((expense) => (
+                    <li
+                      key={expense.id}
+                      className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{expense.productName}</p>
+                          <p className="mt-0.5 text-sm text-[var(--muted)]">
+                            {formatDate(expense.createdAt)}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-lg font-semibold tabular-nums">
+                          {amountFormatter.format(expense.amountMkd)}
+                        </p>
+                      </div>
 
-      {sheetUrl ? (
-        <a
-          href={sheetUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 text-center text-sm text-[var(--muted)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
-        >
-          Open spreadsheet in Drive
-        </a>
-      ) : null}
-    </main>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <Tag label={expense.expenseType} />
+                        <Tag label={expense.category} />
+                        {expense.subcategory ? <Tag label={expense.subcategory} /> : null}
+                      </div>
+
+                      {expense.note ? (
+                        <p className="mt-2 text-sm text-[var(--muted)]">{expense.note}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="hidden overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)] md:block">
+                  <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] bg-[var(--chip)]">
+                        <th className="px-4 py-3 text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Date
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Product
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Category
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Subcategory
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Type
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Amount
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
+                          Note
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((expense) => (
+                        <tr
+                          key={expense.id}
+                          className="border-b border-[var(--border)] last:border-b-0"
+                        >
+                          <td className="whitespace-nowrap px-4 py-3 text-[var(--muted)]">
+                            {formatDateShort(expense.createdAt)}
+                          </td>
+                          <td className="max-w-[12rem] truncate px-4 py-3 font-medium">
+                            {expense.productName}
+                          </td>
+                          <td className="px-4 py-3 capitalize">{expense.category}</td>
+                          <td className="px-4 py-3 text-[var(--muted)] capitalize">
+                            {expense.subcategory || "—"}
+                          </td>
+                          <td className="px-4 py-3 capitalize">{expense.expenseType}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
+                            {amountFormatter.format(expense.amountMkd)}
+                          </td>
+                          <td className="max-w-[14rem] truncate px-4 py-3 text-[var(--muted)]">
+                            {expense.note || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {sheetUrl ? (
+          <a
+            href={sheetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 text-center text-sm text-[var(--muted)] underline-offset-2 hover:text-[var(--foreground)] hover:underline"
+          >
+            Open spreadsheet in Drive
+          </a>
+        ) : null}
+      </main>
+      <BottomNav />
+    </>
   );
 }
 

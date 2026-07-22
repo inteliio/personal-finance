@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { AppHeader } from "@/components/AppHeader";
+import { BottomNav } from "@/components/BottomNav";
 import {
   CATEGORIES,
   EXPENSE_TYPES,
@@ -173,10 +174,11 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6 sm:px-6 sm:py-8">
-      <AppHeader title="New expense" userName={userName} />
+    <>
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6 pb-[calc(var(--nav-height)+env(safe-area-inset-bottom)+1.5rem)] sm:px-6 sm:py-8 md:pb-8">
+        <AppHeader title="New expense" userName={userName} />
 
-      <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-5">
+        <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-5">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Amount (MKD)</span>
           <input
@@ -310,8 +312,10 @@ export function ExpenseForm({ userName, initialSpreadsheetId }: Props) {
             </p>
           )}
         </div>
-      </form>
-    </main>
+        </form>
+      </main>
+      <BottomNav />
+    </>
   );
 }
 
